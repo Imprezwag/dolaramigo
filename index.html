@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Santiago (Imprezwag)">
 <meta name="theme-color" content="#1f6b4a">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -200,7 +201,8 @@ footer a { color: var(--blue); }
   </section>
 
   <footer>
-    Fuente: <a href="https://www.infodolar.com/cotizacion-dolar-localidad-bahia-blanca-provincia-buenos-aires.aspx" target="_blank" rel="noopener">InfoDólar, dólar blue en Bahía Blanca</a>. Valores de referencia.
+    Fuente: <a href="https://www.infodolar.com/cotizacion-dolar-localidad-bahia-blanca-provincia-buenos-aires.aspx" target="_blank" rel="noopener">InfoDólar, dólar blue en Bahía Blanca</a>. Valores de referencia.<br>
+    Idea y autoría: Santiago (<a href="https://github.com/Imprezwag/dolaramigo" target="_blank" rel="noopener">Imprezwag</a>).
   </footer>
 </main>
 
@@ -210,6 +212,7 @@ footer a { color: var(--blue); }
   var KEY = "dolarAmigo.ultimo";
   var REPO = "Imprezwag/dolaramigo";
   var STALE_MIN = 45;
+  var APP = "https://imprezwag.github.io/dolaramigo/";
   // Ultimo valor conocido al armar la pagina. Se reemplaza apenas llega la cotizacion real.
   var state = { compra: 1543, venta: 1571, when: "2026-10-01T18:21:00-03:00", checked: "2026-10-01T22:30:00-03:00", origin: "guardado" };
 
@@ -345,6 +348,7 @@ footer a { color: var(--blue); }
       if (has) lines.push("", "US$ " + fmt(usd) + " = *" + money(usd * amigo) + "*");
     }
     lines.push("", "Fuente: InfoDólar, dólar blue en Bahía Blanca", SOURCE);
+    lines.push("", "Calculalo vos: " + APP);
     var msg = lines.join("\n");
     $("msg").textContent = msg;
     $("wa").href = "https://wa.me/?text=" + encodeURIComponent(msg);
