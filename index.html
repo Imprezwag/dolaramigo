@@ -86,6 +86,7 @@ button[disabled] { opacity: .6; cursor: progress; }
 
 .price { font-family: var(--display); font-weight: 700; font-size: clamp(3rem, 16vw, 4.5rem); line-height: 1; letter-spacing: -0.03em; color: var(--accent); }
 .saving { font-size: .95rem; border-top: 1px solid var(--line); padding-top: 14px; }
+.hours { font-size: .8rem; color: var(--muted); }
 .status { font-size: .875rem; color: var(--muted); }
 .status.warn { color: var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 8px; }
 
@@ -155,6 +156,7 @@ footer a { color: var(--blue); }
     </div>
     <p class="saving" id="saving"></p>
     <p class="status" id="status">Buscando la cotización…</p>
+    <p class="hours">El dólar blue se mueve en horario comercial, de lunes a viernes. Fuera de ese horario, fines de semana y feriados, el precio queda fijo en el último valor publicado hasta que el mercado vuelva a operar.</p>
     <details id="manualBox">
       <summary>Cargar compra y venta a mano</summary>
       <div class="manual">
