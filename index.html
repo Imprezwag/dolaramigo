@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f6b4a">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dólar Amigo">
+<title>Dólar Amigo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una sola columna angosta, pensada para el celular. Arriba el precio, despues la regla compra-amigo-venta, la calculadora y el mensaje. */
+:root {
+  --bg: #eef1ec;
+  --surface: #fbfcfa;
+  --ink: #17231d;
+  --muted: #5d6b63;
+  --line: #d3dad3;
+  --accent: #1f6b4a;
+  --accent-ink: #ffffff;
+  --blue: #2b5c9e;
+  --warn: #9a5a00;
+  --warn-bg: #fbefd6;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111814;
+    --surface: #19221d;
+    --ink: #e8efe9;
+    --muted: #9aa9a0;
+    --line: #2c3a32;
+    --accent: #5fc394;
+    --accent-ink: #0c1a13;
+    --blue: #86b2ee;
+    --warn: #f0c16c;
+    --warn-bg: #3a2c10;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--body);
+  padding-block: 24px 48px;
+  padding-inline: 16px;
+}
+main { max-width: 520px; margin-inline: auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.05rem; font-weight: 700; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+.label { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+header p { color: var(--muted); font-size: .9rem; }
+
+button, .btn {
+  font: 600 .95rem/1 var(--body);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 12px 16px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+button:hover, .btn:hover { border-color: var(--accent); }
+button:focus-visible, .btn:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+button[disabled] { opacity: .6; cursor: progress; }
+.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.price { font-family: var(--display); font-weight: 700; font-size: clamp(3rem, 16vw, 4.5rem); line-height: 1; letter-spacing: -0.03em; color: var(--accent); }
+.saving { font-size: .95rem; border-top: 1px solid var(--line); padding-top: 14px; }
+.status { font-size: .875rem; color: var(--muted); }
+.status.warn { color: var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 8px; }
+
+/* regla compra - amigo - venta */
+.rule { position: relative; height: 6px; border-radius: 3px; background: var(--line); margin: 34px 6px 4px; }
+.rule::before { content: ""; position: absolute; inset: 0; border-radius: 3px; background: linear-gradient(90deg, var(--blue), var(--accent) 50%, var(--blue)); opacity: .55; }
+.rule i { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--blue); border: 3px solid var(--surface); }
+.rule i.mid { left: 50%; width: 20px; height: 20px; background: var(--accent); }
+.rule i.l { left: 0; } .rule i.r { left: 100%; }
+.rule b { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-size: .75rem; color: var(--accent); white-space: nowrap; font-weight: 600; }
+.ends { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ends div:last-child { text-align: right; }
+.ends strong { display: block; font-size: 1.25rem; font-weight: 600; }
+.ends small { color: var(--muted); font-size: .8rem; }
+
+label { font-size: .875rem; font-weight: 600; display: block; margin-bottom: 6px; }
+input[type="text"] {
+  width: 100%; font: 600 1.5rem/1.2 var(--body); font-variant-numeric: tabular-nums;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink);
+}
+.field { position: relative; }
+.field span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; }
+.field input { padding-left: 58px; }
+.result { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 14px; }
+.result strong { font-family: var(--display); font-size: 2rem; line-height: 1.1; color: var(--accent); }
+.compare { font-size: .9rem; color: var(--muted); }
+.compare strong { color: var(--ink); font-weight: 600; }
+
+pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 400 .9rem/1.5 var(--body); background: var(--bg); border-radius: 10px; padding: 14px; border: 1px dashed var(--line); }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 360px) { .actions { grid-template-columns: 1fr; } }
+
+details summary { cursor: pointer; font-weight: 600; font-size: .9rem; color: var(--muted); }
+.manual { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.manual input { font-size: 1.1rem; }
+.explain h3 { font: 700 1rem/1.3 var(--display); margin: 0; }
+.explain ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+#example { border-top: 1px solid var(--line); padding-top: 14px; color: var(--muted); }
+.explain { color: var(--ink); }
+footer { font-size: .8rem; color: var(--muted); }
+footer a { color: var(--blue); }
+@media (prefers-reduced-motion: no-preference) { .rule i.mid { transition: transform .2s; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Dólar Amigo</h1>
+      <p>Blue de Bahía Blanca, partido al medio</p>
+    </div>
+    <button id="refresh" type="button">Actualizar</button>
+  </header>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="label">Dólar amigo hoy</div>
+      <div class="price num" id="amigo">$ -</div>
+    </div>
+    <div>
+      <div class="rule" aria-hidden="true"><i class="l"></i><i class="mid"></i><i class="r"></i><b id="gain"></b></div>
+    </div>
+    <div class="ends">
+      <div><small>Compra (lo que te paga la cueva)</small><strong class="num" id="compra">-</strong></div>
+      <div><small>Venta (lo que te cobra la cueva)</small><strong class="num" id="venta">-</strong></div>
+    </div>
+    <p class="saving" id="saving"></p>
+    <p class="status" id="status">Buscando la cotización…</p>
+    <details id="manualBox">
+      <summary>Cargar compra y venta a mano</summary>
+      <div class="manual">
+        <div><label for="mCompra">Compra</label><input id="mCompra" type="text" inputmode="decimal" autocomplete="off"></div>
+        <div><label for="mVenta">Venta</label><input id="mVenta" type="text" inputmode="decimal" autocomplete="off"></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2>Calculadora</h2>
+    <div>
+      <label for="usd">¿Cuántos dólares?</label>
+      <div class="field"><span>US$</span><input id="usd" type="text" inputmode="decimal" autocomplete="off" value="100"></div>
+    </div>
+    <div class="result">
+      <span class="label">Son en pesos</span>
+      <strong class="num" id="pesos">$ -</strong>
+    </div>
+    <p class="compare" id="compare"></p>
+  </section>
+
+  <section class="panel">
+    <h2>Mensaje para compartir</h2>
+    <pre id="msg"></pre>
+    <div class="actions">
+      <a class="btn primary" id="wa" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+      <button id="copy" type="button">Copiar mensaje</button>
+    </div>
+  </section>
+
+  <section class="panel explain">
+    <h2>📊 ¿Qué es el dólar amigo?</h2>
+    <p>El dólar amigo es un trato directo entre conocidos para comprar y vender dólares sin pagar las comisiones o diferencias de las cuevas o bancos.</p>
+    <h3>💡 ¿Cómo funciona?</h3>
+    <ul>
+      <li>Se toma el precio de compra y venta del dólar blue del día.</li>
+      <li>Se calcula el valor medio exacto entre ambas puntas.</li>
+      <li>El que quiere vender recibe más pesos que en una casa de cambio.</li>
+      <li>El que quiere comprar paga menos pesos que en el mercado informal.</li>
+      <li>Es un beneficio mutuo (win-win) donde se evitan intermediarios.</li>
+    </ul>
+    <p id="example"></p>
+  </section>
+
+  <footer>
+    Fuente: <a href="https://www.infodolar.com/cotizacion-dolar-localidad-bahia-blanca-provincia-buenos-aires.aspx" target="_blank" rel="noopener">InfoDólar, dólar blue en Bahía Blanca</a>. Valores de referencia.
+  </footer>
+</main>
+
+<script>
+(function () {
+  var SOURCE = "https://www.infodolar.com/cotizacion-dolar-localidad-bahia-blanca-provincia-buenos-aires.aspx";
+  var KEY = "dolarAmigo.ultimo";
+  var REPO = "Imprezwag/dolaramigo";
+  var STALE_MIN = 45;
+  // Ultimo valor conocido al armar la pagina. Se reemplaza apenas llega la cotizacion real.
+  var state = { compra: 1543, venta: 1571, when: "2026-10-01T18:21:00-03:00", checked: "2026-10-01T22:30:00-03:00", origin: "guardado" };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var fmt = function (n, dec) {
+    return new Intl.NumberFormat("es-AR", { minimumFractionDigits: dec || 0, maximumFractionDigits: 2 }).format(n);
+  };
+  var money = function (n) { return "$ " + fmt(n, Number.isInteger(Math.round(n * 100) / 100) ? 0 : 2); };
+
+  // "1.543,00" -> 1543 ; tambien acepta "1543.5" o "1543,5"
+  function parseAR(s) {
+    s = String(s || "").replace(/[^\d.,]/g, "");
+    if (!s) return NaN;
+    if (s.indexOf(",") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    return parseFloat(s);
+  }
+
+  var NUM = /\$\s*([\d.]+,\d{2})/;
+  function parsePage(html) {
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var rows = doc.querySelectorAll("tr"), vals = [], when = null;
+    for (var i = 0; i < rows.length && vals.length < 2; i++) {
+      var t = rows[i].textContent.replace(/\s+/g, " ");
+      if (!/d[oó]lar\s+blue\s+en\s+bah[ií]a/i.test(t)) continue;
+      var cells = rows[i].querySelectorAll("td");
+      vals = [];
+      for (var c = 0; c < cells.length && vals.length < 2; c++) {
+        var m = cells[c].textContent.match(NUM);
+        if (m) vals.push(parseAR(m[1]));
+      }
+      var d = rows[i].innerHTML.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?([+-]\d{2}:\d{2}|Z)?/);
+      if (d) when = d[0];
+    }
+    if (vals.length < 2) {
+      // Plan B: texto despues del titulo de la tabla, descartando las variaciones chicas
+      var text = (doc.body ? doc.body.textContent : html).replace(/\s+/g, " ");
+      var at = text.search(/Precio D[oó]lar Blue en Bah/i);
+      if (at >= 0) {
+        vals = (text.slice(at, at + 700).match(/\$\s*[\d.]+,\d{2}/g) || []).map(parseAR).filter(function (n) { return n > 200; }).slice(0, 2);
+      }
+    }
+    if (vals.length < 2 || !(vals[0] > 0) || vals[1] < vals[0]) throw new Error("no se encontró la tabla del blue");
+    return { compra: vals[0], venta: vals[1], when: when || new Date().toISOString(), exact: !!when };
+  }
+
+  function get(url, kind, headers) {
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, 8000);
+    return fetch(url, { signal: ctl.signal, cache: "no-store", headers: headers || {} }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      if (kind === "json") return r.json();
+      if (kind === "wrapped") return r.json().then(function (j) { return j.contents; });
+      return r.text();
+    }).finally(function () { clearTimeout(timer); });
+  }
+
+  // Camino 1: leer InfoDolar en el momento, a traves de un intermediario publico.
+  function fetchLive() {
+    var u = encodeURIComponent(SOURCE);
+    var routes = [
+      [SOURCE, "text"],
+      ["https://api.allorigins.win/raw?url=" + u, "text"],
+      ["https://corsproxy.io/?url=" + u, "text"],
+      ["https://api.codetabs.com/v1/proxy?quest=" + u, "text"],
+      ["https://api.allorigins.win/get?url=" + u, "wrapped"]
+    ];
+    var i = 0;
+    function next(lastErr) {
+      if (i >= routes.length) return Promise.reject(lastErr || new Error("sin conexion"));
+      var r = routes[i++];
+      return get(r[0], r[1]).then(parsePage).then(function (q) {
+        q.checked = new Date().toISOString(); return q;
+      }).catch(next);
+    }
+    return next();
+  }
+
+  // Camino 2: la copia que el proceso automatico de GitHub guarda cada 10 minutos.
+  function fetchSaved() {
+    var toQuote = function (j) {
+      if (!(j && j.compra > 0 && j.venta >= j.compra)) throw new Error("copia invalida");
+      return { compra: j.compra, venta: j.venta, when: j.fuente || j.leido, exact: !!j.fuente, checked: j.leido };
+    };
+    return get("https://api.github.com/repos/" + REPO + "/contents/cotizacion.json?ref=data", "json", { Accept: "application/vnd.github.raw+json" })
+      .catch(function () {
+        return get("https://raw.githubusercontent.com/" + REPO + "/data/cotizacion.json?t=" + Date.now(), "json");
+      }).then(toQuote);
+  }
+
+  function hace(iso) {
+    var min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (min < 1) return "recién";
+    if (min < 60) return "hace " + min + " min";
+    var h = Math.floor(min / 60);
+    return h < 48 ? "hace " + h + " h" : "hace " + Math.floor(h / 24) + " días";
+  }
+
+  function fecha(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("es-AR", { day: "numeric", month: "numeric", year: "numeric" }) + " " +
+           d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
+
+  function render() {
+    var ok = state.compra > 0 && state.venta >= state.compra;
+    var amigo = ok ? (state.compra + state.venta) / 2 : NaN;
+    var gain = ok ? amigo - state.compra : NaN;
+    $("amigo").textContent = ok ? money(amigo) : "$ -";
+    $("compra").textContent = ok ? money(state.compra) : "-";
+    $("venta").textContent = ok ? money(state.venta) : "-";
+    $("gain").textContent = ok ? "Cada uno se ahorra " + money(gain) + " por dólar" : "";
+    $("saving").innerHTML = ok
+      ? "El que vende recibe <strong>" + money(gain) + " más</strong> por dólar que en la cueva. El que compra paga <strong>" + money(gain) + " menos</strong> por dólar. Es el " + fmt(gain / amigo * 100, 2) + " % para cada uno."
+      : "";
+
+    var usd = parseAR($("usd").value);
+    var has = ok && usd > 0;
+    $("pesos").textContent = has ? money(usd * amigo) : "$ -";
+    $("compare").innerHTML = has
+      ? "En una cueva, por esos dólares te darían <strong>" + money(usd * state.compra) + "</strong> y al que compra le cobrarían <strong>" + money(usd * state.venta) + "</strong>. Con dólar amigo cada uno sale <strong>" + money(usd * gain) + "</strong> mejor."
+      : "Poné una cantidad para ver el cálculo.";
+
+    $("example").textContent = ok
+      ? "Hoy: la cueva compra a " + money(state.compra) + " y vende a " + money(state.venta) + ". El dólar amigo queda en " + money(amigo) + ", o sea " + money(gain) + " por dólar a favor de cada uno."
+      : "";
+
+    var lines = ["💵 *Dólar amigo* · " + fecha(state.when)];
+    if (ok) {
+      lines.push("Blue Bahía Blanca (InfoDólar): compra " + money(state.compra) + " / venta " + money(state.venta));
+      lines.push("Dólar amigo (promedio): *" + money(amigo) + "*");
+      if (has) lines.push("", "US$ " + fmt(usd) + " = *" + money(usd * amigo) + "*");
+    }
+    lines.push("", "Fuente: InfoDólar, dólar blue en Bahía Blanca", SOURCE);
+    var msg = lines.join("\n");
+    $("msg").textContent = msg;
+    $("wa").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+  }
+
+  function setStatus(text, warn) {
+    $("status").textContent = text;
+    $("status").className = "status" + (warn ? " warn" : "");
+  }
+
+  function fillManual() {
+    $("mCompra").value = fmt(state.compra);
+    $("mVenta").value = fmt(state.venta);
+  }
+
+  function showFresh() {
+    var age = (Date.now() - new Date(state.checked).getTime()) / 60000;
+    var txt = (state.exact === false ? "Leído de InfoDólar el " : "InfoDólar publicó este precio el ") + fecha(state.when) + ". Verificado " + hace(state.checked) + ".";
+    if (age > STALE_MIN) setStatus(txt + " Es una verificación vieja y el precio pudo cambiar: tocá Actualizar o mirá InfoDólar antes de cerrar un trato.", true);
+    else setStatus(txt);
+  }
+
+  function apply(q, origin) {
+    state = { compra: q.compra, venta: q.venta, when: q.when, exact: q.exact, checked: q.checked, origin: origin };
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    fillManual(); render(); showFresh();
+  }
+
+  var busy = false, lastRun = 0;
+  function refresh() {
+    if (busy) return;
+    busy = true; lastRun = Date.now();
+    var b = $("refresh");
+    b.disabled = true; b.textContent = "Actualizando…";
+    setStatus("Buscando la cotización en InfoDólar…");
+    var gotLive = false, gotAny = false;
+    var live = fetchLive().then(function (q) { gotLive = gotAny = true; apply(q, "vivo"); });
+    var saved = fetchSaved().then(function (q) { if (!gotLive) { gotAny = true; apply(q, "copia"); } });
+    Promise.allSettled([live, saved]).then(function () {
+      if (!gotAny) {
+        render();
+        $("manualBox").open = true;
+        setStatus("No pude conectar con InfoDólar ahora. Estos valores son los de InfoDólar del " + fecha(state.when) + ", verificados " + hace(state.checked) + ". El precio pudo cambiar: probá Actualizar de nuevo o cargá compra y venta a mano.", true);
+      }
+      busy = false; b.disabled = false; b.textContent = "Actualizar";
+    });
+  }
+
+  function onManual() {
+    var c = parseAR($("mCompra").value), v = parseAR($("mVenta").value);
+    if (c > 0 && v >= c) {
+      state = { compra: c, venta: v, when: new Date().toISOString(), checked: new Date().toISOString(), origin: "manual" };
+      setStatus("Valores cargados a mano.");
+      render();
+    }
+  }
+
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved && saved.compra > 0 && saved.venta >= saved.compra && saved.checked) state = saved;
+  } catch (e) {}
+
+  $("refresh").addEventListener("click", refresh);
+  $("usd").addEventListener("input", render);
+  $("mCompra").addEventListener("input", onManual);
+  $("mVenta").addEventListener("input", onManual);
+  $("copy").addEventListener("click", function () {
+    var b = $("copy"), text = $("msg").textContent;
+    var done = function () { b.textContent = "Copiado"; setTimeout(function () { b.textContent = "Copiar mensaje"; }, 1800); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents($("msg"));
+      var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { document.execCommand("copy"); done(); } catch (e) { b.textContent = "Seleccionado, copialo"; }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  });
+
+  // Vuelve a consultar cada vez que la app pasa a primer plano.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && Date.now() - lastRun > 30000) refresh();
+  });
+  window.addEventListener("pageshow", function (e) { if (e.persisted) refresh(); });
+
+  fillManual();
+  render();
+  refresh();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(function () {});
+}
+</script>
+</body>
+</html>
