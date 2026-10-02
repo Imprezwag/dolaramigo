@@ -1,35 +1,51 @@
 name: Cotizacion
 
+# Lee InfoDolar cada 5 minutos dentro de una corrida larga (el cron de GitHub
+# solo no es confiable). Al terminar, la corrida se relanza a si misma; el cron
+# queda como red de seguridad por si la cadena se corta.
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: cotizacion
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   leer:
     runs-on: ubuntu-latest
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Leer InfoDolar
-        run: node scripts/cotizacion.mjs
-      - name: Publicar en la rama data
+      - name: Leer InfoDolar cada 5 minutos
         run: |
-          mkdir out && mv cotizacion.json out/ && cd out
+          fin=$((SECONDS + 340 * 60))
+          mkdir out && cd out
           git init -q -b data
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cotizacion.json
-          git commit -q -m "Cotizacion $(date -u +%FT%TZ)"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data
+          while [ $SECONDS -lt $fin ]; do
+            if node ../scripts/cotizacion.mjs; then
+              git add cotizacion.json
+              git commit -q -m "Cotizacion $(date -u +%FT%TZ)"
+              git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data || echo "No se pudo publicar esta lectura"
+            else
+              echo "Lectura fallida, se reintenta en 5 minutos"
+            fi
+            sleep 300
+          done
+      - name: Relanzar
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run cotizacion.yml --repo "${{ github.repository }}" --ref main

@@ -282,15 +282,12 @@ footer a { color: var(--blue); }
       ["https://api.codetabs.com/v1/proxy?quest=" + u, "text"],
       ["https://api.allorigins.win/get?url=" + u, "wrapped"]
     ];
-    var i = 0;
-    function next(lastErr) {
-      if (i >= routes.length) return Promise.reject(lastErr || new Error("sin conexion"));
-      var r = routes[i++];
+    // Todos a la vez: gana el primero que responde bien. Como mucho tarda 8 segundos.
+    return Promise.any(routes.map(function (r) {
       return get(r[0], r[1]).then(parsePage).then(function (q) {
         q.checked = new Date().toISOString(); return q;
-      }).catch(next);
-    }
-    return next();
+      });
+    }));
   }
 
   // Camino 2: la copia que el proceso automatico de GitHub guarda cada 10 minutos.
